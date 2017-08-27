@@ -21,12 +21,14 @@ public class OpenERPUtils {
     public static final String DATABASE = "openerp";
     public static final String USER = "admin";
     public static final String PASSWORD = "password";
+    public static final String PATIENT_NAME = "Raj Malhotra";
+    public static final String PATIENT_UUID = "6e6691b4-27c5-4733-9f26-342a28317423";
 
-    public static void main(String[] args) throws MalformedURLException, XmlRpcException {
+    public static void main(String[] args) throws Exception {
         OpenERPUtils  app = new OpenERPUtils();
         //app.getDatabaseList();
         int connectionId = app.login();
-        Object[] customers = app.findCustomers(connectionId, "Raj Malhotra", "6e6691b4-27c5-4733-9f26-342a28317423");
+        Object[] customers = app.findCustomers(connectionId, PATIENT_NAME, PATIENT_UUID);
         List<Object> erpPartnerIds = Arrays.stream(customers).map(e -> ((Map) e).get("id")).collect(Collectors.toList());
         Map<Object, Object> saleOrdersForCustomers = new HashMap();
         Arrays.stream(customers).forEach(c -> saleOrdersForCustomers.put( ((Map) c).get("id"), ((Map) c).get("sale_order_ids")));
@@ -45,7 +47,7 @@ public class OpenERPUtils {
         }
     }
 
-    public Vector<String> getDatabaseList() throws MalformedURLException {
+    public List<String> getDatabaseList() throws MalformedURLException, XmlRpcException {
         XmlRpcClient xmlrpcDb = new XmlRpcClient();
 
         XmlRpcClientConfigImpl xmlrpcConfigDb = new XmlRpcClientConfigImpl();
@@ -54,23 +56,17 @@ public class OpenERPUtils {
 
         xmlrpcDb.setConfig(xmlrpcConfigDb);
         Vector<String> res = new Vector<String>();
-        try {
-            //Retrieve databases
-            List<Object> params = new Vector<Object>();
-            Object result = xmlrpcDb.execute("list", params);
-            Object[] a = (Object[]) result;
+        //Retrieve databases
+        List<Object> params = new Vector<Object>();
+        Object result = xmlrpcDb.execute("list", params);
+        Object[] a = (Object[]) result;
 
-            System.out.println(a.length);
-            System.out.println(a.getClass());
-            for (int i = 0; i < a.length; i++) {
-                if (a[i] instanceof String) {
-                    res.addElement((String) a[i]);
-                }
+        System.out.println(a.length);
+        System.out.println(a.getClass());
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] instanceof String) {
+                res.addElement((String) a[i]);
             }
-        } catch(XmlRpcException e) {
-            System.out.println("XmlException Error while retrieving OpenERP Databases: ");
-        } catch(Exception e) {
-            System.out.println("Error while retrieving OpenERP Databases: ");
         }
         return res;
     }
@@ -157,6 +153,7 @@ public class OpenERPUtils {
 
     }
 
+    //Not tested
     private void getInvoices(Integer uid) throws MalformedURLException, XmlRpcException {
         final XmlRpcClient client = new XmlRpcClient();
 
