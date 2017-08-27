@@ -1,0 +1,20 @@
+#Gradle dirs
+.gradle/
+
+#Idea dirs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+#Build dirs
+build/
+out/
+classes/
+target
+
+#Logs
+nohup.out
+
+#OSX specific files
+.DS_Store
