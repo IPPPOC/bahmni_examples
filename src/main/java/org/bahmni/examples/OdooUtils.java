@@ -28,6 +28,7 @@ public class OdooUtils {
         OdooUtils app = new OdooUtils();
         //app.getDatabaseList();
         int connectionId = app.login();
+//        app.createCustomer(connectionId, "Test Customer");
         Object[] customers = app.findCustomers(connectionId, PATIENT_NAME, PATIENT_UUID);
         List<Object> erpPartnerIds = Arrays.stream(customers).map(e -> ((Map) e).get("id")).collect(Collectors.toList());
         Map<Object, Object> saleOrdersForCustomers = new HashMap();
@@ -125,34 +126,63 @@ public class OdooUtils {
     private Object[] findCustomers(Integer connectionId, String customerName, String patientUuid) throws MalformedURLException, XmlRpcException {
         XmlRpcClient xmlrpcClient = getXmlRpcClient();
 
-        List<Object> criteria = new ArrayList<Object>();
+        final List ids = asList((Object[])xmlrpcClient.execute(
+                "execute_kw", asList(
+                        DATABASE, connectionId, PASSWORD,
+                        "res.partner", "search",
+                        asList(asList(
+                                asList("is_company", "=", true),
+                                asList("customer", "=", true))),
+                        new HashMap() {{ put("limit", 1); }})));
+        System.out.println(ids);
+
+        List customer_details = asList((Object[])xmlrpcClient.execute("execute_kw", asList(
+                DATABASE, connectionId, PASSWORD,
+                "res.partner", "read",
+                asList(ids),
+                new HashMap() {{
+                    put("fields", asList("name", "country_id", "comment"));
+                }}
+        )));
+
+        System.out.println(customer_details);
+
+//        List<Object> criteria = new ArrayList<Object>();
 //        criteria.add(asList("name", "=", customerName).toArray());
 //        criteria.add(asList("customer", "=", true).toArray());
-        criteria.add(asList("uuid", "=", patientUuid).toArray());
-        List<Object> customerSearchParams = asList(
-                DATABASE, connectionId, PASSWORD, "res.partner", "search", criteria
-        );
-        Object customerIds = xmlrpcClient.execute("execute", customerSearchParams.toArray());
-
-        criteria.clear();
-        Arrays.stream((Object[]) customerIds).forEach(e -> criteria.add(Integer.valueOf(e.toString())));
-        List<Object> readParams = asList(
-                DATABASE, connectionId, PASSWORD, "res.partner", "read", criteria
-        );
-
-        /**
-         result - array of hashmap,
-         "ref":patient identifier (e.g GAN203006)
-         "uuid": emr patient uuid (e.g. "uuid" -> "6e6691b4-27c5-4733-9f26-342a28317423")
-         "sale_order_ids": array of int objects
-         "invoice_ids": : array of int objects
-         "id":ERP partner id (int)
-         */
-        Object result = xmlrpcClient.execute("execute", readParams.toArray());
-        return (Object[]) result;
+//        criteria.add(asList("is_company", "=", true).toArray());
+//        criteria.add(asList("customer", "=", true).toArray());
+//        List<Object> customerSearchParams = asList(
+//                DATABASE, connectionId, PASSWORD, "res.partner", "search", criteria
+//        );
+//        Object customerIds = xmlrpcClient.execute("execute_kw", customerSearchParams.toArray());
+//
+//        criteria.clear();
+//        Arrays.stream((Object[]) customerIds).forEach(e -> criteria.add(Integer.valueOf(e.toString())));
+//        List<Object> readParams = asList(
+//                DATABASE, connectionId, PASSWORD, "res.partner", "read", criteria
+//        );
+//
+//        /**
+//         result - array of hashmap,
+//         "ref":patient identifier (e.g GAN203006)
+//         "uuid": emr patient uuid (e.g. "uuid" -> "6e6691b4-27c5-4733-9f26-342a28317423")
+//         "sale_order_ids": array of int objects
+//         "invoice_ids": : array of int objects
+//         "id":ERP partner id (int)
+//         */
+//        Object result = xmlrpcClient.execute("execute", readParams.toArray());
+        return null;
 
     }
 
+    private void createCustomer(Integer connectionId, String customerName) throws MalformedURLException, XmlRpcException {
+        final Integer id = (Integer)getXmlRpcClient().execute("execute_kw", asList(
+                DATABASE, connectionId, PASSWORD,
+                "res.partner", "create",
+                asList(new HashMap() {{ put("name", customerName); }})
+        ));
+    }
     //Not tested
     private void getInvoices(Integer uid) throws MalformedURLException, XmlRpcException {
         final XmlRpcClient client = new XmlRpcClient();
